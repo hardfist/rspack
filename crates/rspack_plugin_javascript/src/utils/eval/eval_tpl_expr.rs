@@ -28,7 +28,8 @@ fn get_simplified_template_result(
       TemplateStringKind::Cooked => quasi_expr
         .cooked
         .as_ref()
-        .expect("quasic should be not empty"),
+        // Fall back to raw if cooked is None (e.g., for invalid escape sequences or certain Unicode sequences)
+        .unwrap_or(&quasi_expr.raw),
       TemplateStringKind::Raw => &quasi_expr.raw,
     };
     if i > 0 {
