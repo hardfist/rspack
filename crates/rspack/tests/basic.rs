@@ -40,3 +40,22 @@ async fn basic_sourcemap() {
   );
   assert!(compiler.compilation.assets().get("main.js.map").is_some());
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn unicode_template_literals() {
+  // Test for issue #12706 - template literals with Unicode escape sequences should not panic
+  let mut compiler = Compiler::builder()
+    .context(Utf8Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/unicode-template"))
+    .entry("main", "./src/index.js")
+    .build()
+    .unwrap();
+
+  compiler.build().await.unwrap();
+
+  // The main assertion is that the build completes without panicking
+  let errors: Vec<_> = compiler.compilation.get_errors().collect();
+  assert!(errors.is_empty());
+
+  // Verify the output was generated
+  assert!(compiler.compilation.assets().get("main.js").is_some());
+}
