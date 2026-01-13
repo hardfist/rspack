@@ -25,7 +25,7 @@ pub enum ChunkKind {
 
 pub type ChunkContentHash = HashMap<SourceType, RspackHashDigest>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChunkHashesResult {
   hash: RspackHashDigest,
   content_hash: ChunkContentHash,

@@ -46,6 +46,10 @@ impl Incremental {
     self.passes.contains(pass)
   }
 
+  pub fn passes_enabled(&self, pass: IncrementalPasses) -> bool {
+    self.passes.contains(pass)
+  }
+
   pub fn mutations_write(&mut self) -> Option<&mut Mutations> {
     self.can_write_mutations().then_some(&mut self.mutations)
   }

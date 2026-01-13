@@ -1,5 +1,7 @@
 use rspack_collections::IdentifierMap;
 
+use super::ArtifactExt;
+use crate::incremental::IncrementalPasses;
 use crate::{ModuleIdentifier, RuntimeGlobals, RuntimeSpec, RuntimeSpecMap};
 
 #[derive(Debug, Default)]
@@ -29,5 +31,16 @@ impl CgmRuntimeRequirementsArtifact {
 
   pub fn remove(&mut self, module: &ModuleIdentifier) -> Option<RuntimeSpecMap<RuntimeGlobals>> {
     self.module_to_runtime_requirements.remove(module)
+  }
+
+  pub fn clear(&mut self) {
+    self.module_to_runtime_requirements.clear();
+  }
+}
+
+impl ArtifactExt for CgmRuntimeRequirementsArtifact {
+  const PASS: IncrementalPasses = IncrementalPasses::MODULES_RUNTIME_REQUIREMENTS;
+  fn reset(&mut self) {
+    self.clear();
   }
 }

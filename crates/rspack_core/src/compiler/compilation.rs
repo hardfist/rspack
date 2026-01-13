@@ -1156,7 +1156,7 @@ impl Compilation {
       self.chunk_render_artifact.extend(chunk_render_results);
       self.chunk_render_artifact.clone()
     } else {
-      chunk_render_results
+      ChunkRenderArtifact::new(chunk_render_results)
     };
 
     for (
@@ -1392,7 +1392,7 @@ impl Compilation {
     } else {
       dependencies_diagnostics
     };
-    self.extend_diagnostics(all_modules_diagnostics.into_values().flatten());
+    self.extend_diagnostics(all_modules_diagnostics.into_inner().into_values().flatten());
   }
 
   #[instrument("Compilation:seal", skip_all)]

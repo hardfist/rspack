@@ -1,7 +1,8 @@
-use rspack_collections::UkeyMap;
 use rspack_util::atom::Atom;
 
-use crate::{DependencyId, ExportInfo, ModuleIdentifier};
+use crate::{ExportInfo, ModuleIdentifier};
+
+// SideEffectsOptimizeArtifact is now defined via define_artifact! macro in mod.rs
 
 #[derive(Debug, Clone)]
 pub struct SideEffectsDoOptimize {
@@ -15,5 +16,3 @@ pub struct SideEffectsDoOptimizeMoveTarget {
   pub export_info: ExportInfo,
   pub target_export: Option<Vec<Atom>>,
 }
-
-pub type SideEffectsOptimizeArtifact = UkeyMap<DependencyId, Option<SideEffectsDoOptimize>>;
