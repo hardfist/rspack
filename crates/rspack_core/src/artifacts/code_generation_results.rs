@@ -232,46 +232,36 @@ impl CodeGenerationResults {
     module_identifier: &ModuleIdentifier,
     runtime: Option<&RuntimeSpec>,
   ) -> &CodeGenerationResult {
-    if let Some(entry) = self.map.get(module_identifier) {
-      if let Some(runtime) = runtime {
-        entry
-          .get(runtime)
-          .and_then(|m| {
-            self.module_generation_result_map.get(m)
-          })
-          .unwrap_or_else(|| {
-            panic!(
-              "Failed to code generation result for {module_identifier} with runtime {runtime:?} \n {entry:?}"
-            )
-          })
-      } else {
-        if entry.size() > 1 {
-          let mut values = entry.values();
-          let results: FxHashSet<_> = entry.values().collect();
-          if results.len() > 1 {
-            panic!(
-              "No unique code generation entry for unspecified runtime for {module_identifier} ",
-            );
-          }
-
-          return values
-            .next()
-            .and_then(|m| self.module_generation_result_map.get(m))
-            .unwrap_or_else(|| panic!("Expected value exists"));
-        }
-
-        entry
-          .values()
-          .next()
-          .and_then(|m| self.module_generation_result_map.get(m))
-          .unwrap_or_else(|| panic!("Expected value exists"))
-      }
-    } else {
+    self.try_get(module_identifier, runtime).unwrap_or_else(|| {
       panic!(
         "No code generation entry for {} (existing entries: {:?})",
         module_identifier,
         self.map.keys().collect::<Vec<_>>()
       )
+    })
+  }
+
+  pub fn try_get(
+    &self,
+    module_identifier: &ModuleIdentifier,
+    runtime: Option<&RuntimeSpec>,
+  ) -> Option<&CodeGenerationResult> {
+    let entry = self.map.get(module_identifier)?;
+    if let Some(runtime) = runtime {
+      entry
+        .get(runtime)
+        .and_then(|m| self.module_generation_result_map.get(m))
+    } else {
+      if entry.size() > 1 {
+        let results: FxHashSet<_> = entry.values().collect();
+        if results.len() > 1 {
+          return None;
+        }
+      }
+      entry
+        .values()
+        .next()
+        .and_then(|m| self.module_generation_result_map.get(m))
     }
   }
 
@@ -301,14 +291,24 @@ impl CodeGenerationResults {
     self.get(module_identifier, runtime).runtime_requirements
   }
 
+  pub fn try_get_runtime_requirements(
+    &self,
+    module_identifier: &ModuleIdentifier,
+    runtime: Option<&RuntimeSpec>,
+  ) -> Option<RuntimeGlobals> {
+    self
+      .try_get(module_identifier, runtime)
+      .map(|result| result.runtime_requirements)
+  }
+
   pub fn get_hash(
     &self,
     module_identifier: &ModuleIdentifier,
     runtime: Option<&RuntimeSpec>,
   ) -> Option<&RspackHashDigest> {
-    let code_generation_result = self.get(module_identifier, runtime);
-
-    code_generation_result.hash.as_ref()
+    self
+      .try_get(module_identifier, runtime)
+      .and_then(|result| result.hash.as_ref())
   }
 
   pub fn into_inner(

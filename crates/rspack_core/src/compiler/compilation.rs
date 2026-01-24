@@ -1816,9 +1816,12 @@ impl Compilation {
                 .old_cache
                 .process_runtime_requirements_occasion
                 .use_cache(module, runtime, compilation, || async {
+                  // During incremental rebuilds, a module might not have code generation
+                  // results yet. Default to empty runtime requirements in that case.
                   let mut runtime_requirements = compilation
                     .code_generation_results
-                    .get_runtime_requirements(&module, Some(runtime));
+                    .try_get_runtime_requirements(&module, Some(runtime))
+                    .unwrap_or_default();
 
                   plugin_driver
                     .compilation_hooks

@@ -691,13 +691,14 @@ impl Chunk {
       .get_ordered_chunk_modules(&self.ukey, &compilation.get_module_graph())
     {
       let module_identifier = module.identifier();
-      let hash = compilation
+      // During incremental rebuilds (e.g., HMR with syntax errors), a module might be
+      // in a chunk but not yet have code generation results. Skip such modules.
+      if let Some(hash) = compilation
         .code_generation_results
         .get_hash(&module_identifier, Some(&self.runtime))
-        .unwrap_or_else(|| {
-          panic!("Module ({module_identifier}) should have hash result when updating chunk hash.");
-        });
-      hash.hash(hasher);
+      {
+        hash.hash(hasher);
+      }
     }
     for (runtime_module_identifier, _) in compilation
       .chunk_graph

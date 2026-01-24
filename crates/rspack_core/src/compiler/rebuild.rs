@@ -216,11 +216,13 @@ impl CompilationRecords {
           .chunk_graph
           .get_module_runtimes_iter(*identifier, &compilation.chunk_by_ukey)
         {
-          let hash = compilation
+          // During incremental rebuilds, a module might not have code generation results yet
+          if let Some(hash) = compilation
             .code_generation_results
             .get_hash(identifier, Some(runtime))
-            .expect("should have hash");
-          hashes.set(runtime.clone(), hash.clone());
+          {
+            hashes.set(runtime.clone(), hash.clone());
+          }
         }
         Some((module_id, hashes))
       })
