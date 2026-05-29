@@ -9,6 +9,10 @@ on:
       runner: # Runner labels
         required: true
         type: string
+      measurement-mode:
+        required: false
+        type: string
+        default: simulation
       ref: # Git reference to checkout
         required: false
         type: string
@@ -59,13 +63,13 @@ jobs:
       - name: Run Cargo codegen
         run: cargo codegen
 
-      - name: Build benchmark (simulation,memory)
-        run: cargo codspeed build -m simulation --profile codspeed -p rspack_benchmark
+      - name: Build benchmark (${{ inputs.measurement-mode }})
+        run: cargo codspeed build -m ${{ inputs.measurement-mode }} --profile codspeed -p rspack_benchmark
 
-      - name: Prepare Valgrind temporary directory
+      - name: Prepare CodSpeed temporary directory
         run: mkdir -p "${RUNNER_TEMP}/codspeed-valgrind-tmp"
 
-      - name: Run benchmark (simulation,memory)
+      - name: Run benchmark (${{ inputs.measurement-mode }})
         uses: CodSpeedHQ/action@d872884a306dd4853acf0f584f4b706cf0cc72a2
         timeout-minutes: 30
         env:
@@ -73,13 +77,13 @@ jobs:
           RAYON_NUM_THREADS: 1
           CODSPEED_EXPERIMENTAL_FAIR_SCHED: true
         with:
-          mode: 'simulation'
-          run: pnpm run bench:rust
+          mode: ${{ inputs.measurement-mode }}
+          run: RSPACK_BENCHCASES_DIR=$PWD/.bench/rspack-benchcases cargo codspeed run -m ${{ inputs.measurement-mode }}
           token: ${{ secrets.CODSPEED_TOKEN }}
           runner-version: 4.13.0
 
       - name: Prepare Valgrind temporary files artifact
-        if: ${{ always() }}
+        if: ${{ always() && inputs.measurement-mode != 'walltime' }}
         run: |
           mkdir -p "${RUNNER_TEMP}/codspeed-valgrind-tmp"
           {
@@ -89,7 +93,7 @@ jobs:
           } > "${RUNNER_TEMP}/codspeed-valgrind-tmp/MANIFEST.txt"
 
       - name: Upload Valgrind temporary files
-        if: ${{ always() }}
+        if: ${{ always() && inputs.measurement-mode != 'walltime' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: codspeed-valgrind-tmp-${{ inputs.target }}
